@@ -557,6 +557,10 @@ EOF
       "description": "主控節點"
     }
   ],
+  "security": {
+    "blockPrivateNetworks": false,
+    "blacklistedTargets": []
+  },
   "settings": {
     "maxConcurrentTests": 3,
     "defaultPingCount": 4,
