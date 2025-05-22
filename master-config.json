@@ -1,0 +1,168 @@
+{
+  "nodes": [
+    {
+      "id": "debian1-master",
+      "name": "台北主控節點",
+      "location": "台北, 台灣",
+      "ipv4": "203.74.125.1",
+      "provider": "中華電信",
+      "status": "online",
+      "type": "local",
+      "description": "Master 主控節點",
+      "coordinates": {
+        "lat": 25.0330,
+        "lng": 121.5654
+      }
+    },
+    {
+      "id": "debian2-tokyo",
+      "name": "東京節點",
+      "location": "東京, 日本",
+      "ipv4": "210.188.224.1",
+      "provider": "NTT Communications",
+      "status": "online",
+      "type": "slave",
+      "description": "東京 Slave 節點",
+      "coordinates": {
+        "lat": 35.6762,
+        "lng": 139.6503
+      },
+      "slaveConfig": {
+        "host": "192.168.1.101",
+        "port": 3001,
+        "apiKey": "tokyo-node-secure-key-12345"
+      }
+    },
+    {
+      "id": "debian3-singapore",
+      "name": "新加坡節點",
+      "location": "新加坡",
+      "ipv4": "165.21.83.1",
+      "provider": "M1",
+      "status": "online",
+      "type": "slave",
+      "description": "新加坡 Slave 節點",
+      "coordinates": {
+        "lat": 1.3521,
+        "lng": 103.8198
+      },
+      "slaveConfig": {
+        "host": "192.168.1.102",
+        "port": 3001,
+        "apiKey": "singapore-node-secure-key-67890"
+      }
+    },
+    {
+      "id": "debian4-hongkong",
+      "name": "香港節點",
+      "location": "香港",
+      "ipv4": "202.45.84.1",
+      "provider": "PCCW",
+      "status": "online",
+      "type": "slave",
+      "description": "香港 Slave 節點",
+      "coordinates": {
+        "lat": 22.3193,
+        "lng": 114.1694
+      },
+      "slaveConfig": {
+        "host": "192.168.1.103",
+        "port": 3001,
+        "apiKey": "hongkong-node-secure-key-abcde"
+      }
+    },
+    {
+      "id": "debian5-london",
+      "name": "倫敦節點",
+      "location": "倫敦, 英國",
+      "ipv4": "195.66.224.1",
+      "provider": "JANET",
+      "status": "offline",
+      "type": "slave",
+      "description": "倫敦 Slave 節點",
+      "coordinates": {
+        "lat": 51.5074,
+        "lng": -0.1278
+      },
+      "slaveConfig": {
+        "host": "192.168.1.104",
+        "port": 3001,
+        "apiKey": "london-node-secure-key-fghij"
+      }
+    }
+  ],
+  "security": {
+    "rateLimitWindow": 60000,
+    "rateLimitMax": 20,
+    "allowedOrigins": [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "https://yourdomain.com",
+      "https://lg.yourdomain.com"
+    ],
+    "blockPrivateNetworks": true,
+    "blacklistedTargets": [
+      "192.168.",
+      "10.",
+      "172.16.",
+      "172.17.",
+      "172.18.",
+      "172.19.",
+      "172.20.",
+      "172.21.",
+      "172.22.",
+      "172.23.",
+      "172.24.",
+      "172.25.",
+      "172.26.",
+      "172.27.",
+      "172.28.",
+      "172.29.",
+      "172.30.",
+      "172.31.",
+      "127.",
+      "169.254.",
+      "224.",
+      "225.",
+      "226.",
+      "227.",
+      "228.",
+      "229.",
+      "230.",
+      "231.",
+      "232.",
+      "233.",
+      "234.",
+      "235.",
+      "236.",
+      "237.",
+      "238.",
+      "239."
+    ]
+  },
+  "settings": {
+    "pingTimeout": 30000,
+    "tracerouteTimeout": 60000,
+    "maxHops": 20,
+    "pingCount": 4,
+    "enableIPv6": false,
+    "logLevel": "info",
+    "slaveHealthCheckInterval": 120000,
+    "slaveRequestTimeout": 30000
+  },
+  "branding": {
+    "title": "Multi-Node Looking Glass",
+    "description": "分散式網路診斷工具",
+    "contact": "admin@yourdomain.com",
+    "company": "Your Company Name",
+    "version": "2.0.0"
+  },
+  "monitoring": {
+    "enableHealthCheck": true,
+    "healthCheckInterval": 120000,
+    "alertThreshold": 3,
+    "enableLogging": true,
+    "logPath": "./logs/",
+    "enableMetrics": true
+  }
+}

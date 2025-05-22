@@ -1,0 +1,31 @@
+{
+  "name": "looking-glass-master",
+  "version": "2.0.0",
+  "description": "Looking Glass Master Node",
+  "main": "master-server.js",
+  "scripts": {
+    "start": "node master-server.js",
+    "dev": "nodemon master-server.js",
+    "monitor": "node monitor.js"
+  },
+  "dependencies": {
+    "axios": "^1.4.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "express-rate-limit": "^6.7.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "keywords": [
+    "looking-glass",
+    "network-tools",
+    "ping",
+    "traceroute"
+  ],
+  "author": "Zhuyuan Jiang",
+  "license": "MIT"
+}
