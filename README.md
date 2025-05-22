@@ -7,8 +7,8 @@
 兩端之間，可用像是Wireguard、GRE、Vxlan等方式進行連結
 使用的是本身自己的API，未來可嘗試更改成Globalping API
 
-#使用方法
-##Master
+# 使用方法
+## Master
 首先先更新apt，安裝nodejs，以及clone專案下來
 ```
 apt update
@@ -30,5 +30,5 @@ npm start
 ```
 接著就可以上 http://你的IP:3000 來查看網頁了！
 
-##Slave
+## Slave
 一樣
