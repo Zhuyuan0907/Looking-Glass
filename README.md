@@ -2,9 +2,9 @@
 因為網路上的Looking Glass不適合我，所以叫Claude寫了一個出來
 
 # 使用說明
-該Looking Glass是具有能夠多開節點的功能
-主端為Master，其他節點則統一為Slave
-兩端之間，可用像是Wireguard、GRE、Vxlan等方式進行連結
+該Looking Glass是具有能夠多開節點的功能  
+主端為Master，其他節點則統一為Slave  
+兩端之間，可用像是Wireguard、GRE、Vxlan等方式進行連結  
 使用的是本身自己的API，未來可嘗試更改成Globalping API
 
 # 使用方法
@@ -38,7 +38,7 @@ apt install git -y
 git clone https://github.com/Zhuyuan0907/Looking-Glass
 cd Looking-Glass
 ```
-不過，我們這次只有要使用裡面的install.sh，安裝完後就可以把整個資料夾刪除了
+不過，我們這次只有要使用裡面的install.sh，安裝完後就可以把整個資料夾刪除了  
 執行install.sh後，安裝slave相關文件
 ```
 chmod +x install.sh
@@ -48,8 +48,8 @@ chmod +x install.sh
 ```
 y
 ```
-接著，我們要去slave的config文件，去配置與Master端通信
-注意，Port的部分都是固定的，不需要去更動，Slave一律皆為3001
+接著，我們要去slave的config文件，去配置與Master端通信  
+注意，Port的部分都是固定的，不需要去更動，Slave一律皆為3001  
 然後apikey兩者之間要相同
 ```
 nano /opt/looking-glass-slave/slave-config.json
