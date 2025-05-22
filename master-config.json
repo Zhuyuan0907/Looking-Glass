@@ -91,7 +91,6 @@
       }
     }
   ],
-  },
   "settings": {
     "pingTimeout": 30000,
     "tracerouteTimeout": 60000,
