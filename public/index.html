@@ -3,7 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Looking Glass - Network Tools</title>
+    <title>Looking Glass - 看見玻璃</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+    <link rel="icon" type="image/ico" href="favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    
     <style>
         * {
             margin: 0;
@@ -35,9 +42,22 @@
             color: #495057;
         }
 
-        .logo::before {
-            content: "🌐";
-            font-size: 2rem;
+        .logo-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            object-fit: contain;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+        }
+
+        @media (max-width: 768px) {
+            .logo-icon {
+                width: 2rem;
+                height: 2rem;
+            }
+            
+            .logo {
+                font-size: 1.5rem;
+            }
         }
 
         .container {
@@ -143,7 +163,7 @@
             background: white;
             border-radius: 16px;
             width: 100%;
-            max-width: 1100px;
+            max-width: 1000px;
             max-height: 90vh;
             overflow: hidden;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -193,16 +213,17 @@
         }
 
         .modal-body {
-            padding: 2rem;
+            padding: 1.5rem;
             overflow-y: auto;
             max-height: calc(90vh - 140px);
         }
 
         .node-info-section {
             background: #f8f9fa;
-            padding: 1.5rem;
+            padding: 1rem;
             border-radius: 12px;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
+            flex-shrink: 0;
         }
 
         .node-info-header {
@@ -226,7 +247,8 @@
         }
 
         .test-section {
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
+            flex-shrink: 0;
         }
 
         .form-row {
@@ -303,7 +325,7 @@
         .output-section {
             background: #f8f9fa;
             border-radius: 12px;
-            padding: 1.5rem;
+            padding: 1rem;
             overflow: hidden;
         }
 
@@ -364,16 +386,20 @@
             padding: 1rem;
             border-radius: 8px;
             font-family: 'Courier New', monospace;
-            font-size: 0.78rem;
-            min-height: 300px;
+            font-size: 0.75rem;
+            min-height: 250px;
             white-space: pre;
-            overflow: auto;
+            overflow-x: auto;
+            overflow-y: auto;
             line-height: 1.4;
             border: 1px solid #e9ecef;
             scrollbar-width: thin;
             scrollbar-color: #495057 #1e1e1e;
             width: 100%;
+            min-width: 100%;
             box-sizing: border-box;
+            word-break: keep-all;
+            word-wrap: normal;
         }
 
         .output-content::-webkit-scrollbar {
@@ -411,11 +437,12 @@
             .modal {
                 margin: 0.5rem;
                 max-width: calc(100% - 1rem);
-                max-height: 95vh;
+                max-height: 98vh;
             }
 
             .modal-body {
                 padding: 1rem;
+                gap: 1.5rem;
             }
 
             .modal-header {
@@ -423,8 +450,18 @@
             }
 
             .output-content {
-                font-size: 0.7rem;
+                font-size: 0.8rem;
                 padding: 1rem;
+                line-height: 1.4;
+                height: 350px;
+            }
+
+            .node-info-section {
+                padding: 1rem;
+            }
+
+            .output-section {
+                min-height: 300px;
             }
         }
 
@@ -469,7 +506,10 @@
 </head>
 <body>
     <div class="header">
-        <div class="logo">Looking Glass</div>
+        <div class="logo">
+            <img src="logo.png" alt="Logo" class="logo-icon">
+            竺原ㄉLooking Glass，讓你看見玻璃
+        </div>
     </div>
 
     <div class="container">
@@ -769,7 +809,7 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    // 對 MTR 輸出進行特殊處理，確保完整顯示
+                    // 對 MTR 輸出進行格式化，改善對齊
                     let formattedOutput = data.output;
                     if (type === 'mtr') {
                         formattedOutput = formatMtrOutput(data.output);
@@ -810,17 +850,85 @@
             }, 5000);
         }
 
-        // 格式化 MTR 輸出，確保完整顯示且保持表格格式
+        // MTR 輸出格式化函數 - 右對齊數字，不截斷主機名
         function formatMtrOutput(output) {
             const lines = output.split('\n');
             let formattedLines = [];
+            let maxHostLength = 30; // 預設最小寬度
+            let dataRows = [];
             
+            // 第一次掃描：找出最長的主機名，收集數據行
             for (let line of lines) {
-                if (line.trim()) {
-                    // 保持原始格式，確保每一行都是獨立的
-                    // 對於很長的行，我們保持原樣但確保不會在不合適的地方斷行
-                    formattedLines.push(line);
+                const trimmed = line.trim();
+                if (trimmed.includes('|--')) {
+                    const parts = trimmed.split(/\s+/);
+                    if (parts.length >= 8) {
+                        const hostPart = parts[0] + ' ' + parts[1];
+                        maxHostLength = Math.max(maxHostLength, hostPart.length);
+                        
+                        dataRows.push({
+                            original: trimmed,
+                            hostPart: hostPart,
+                            stats: parts.slice(2) // Loss%, Snt, Last, Avg, Best, Wrst, StDev
+                        });
+                    }
                 }
+            }
+            
+            // 限制最大寬度，但給主機名足夠空間
+            maxHostLength = Math.min(maxHostLength + 3, 80);
+            
+            // 第二次處理：格式化輸出
+            for (let line of lines) {
+                const trimmed = line.trim();
+                
+                if (!trimmed) {
+                    formattedLines.push('');
+                    continue;
+                }
+                
+                // 處理表頭行
+                if (trimmed.includes('HOST:') && trimmed.includes('Loss%')) {
+                    const header = 
+                        'HOST:'.padEnd(maxHostLength) + 
+                        'Loss%'.padStart(8) + 
+                        'Snt'.padStart(6) + 
+                        'Last'.padStart(8) + 
+                        'Avg'.padStart(8) + 
+                        'Best'.padStart(8) + 
+                        'Wrst'.padStart(8) + 
+                        'StDev'.padStart(8);
+                    
+                    formattedLines.push(header);
+                    continue;
+                }
+                
+                // 處理數據行
+                if (trimmed.includes('|--')) {
+                    const dataRow = dataRows.find(function(row) {
+                        return row.original === trimmed;
+                    });
+                    if (dataRow && dataRow.stats.length >= 7) {
+                        const formattedRow = 
+                            dataRow.hostPart.padEnd(maxHostLength) +
+                            dataRow.stats[0].padStart(8) +  // Loss%
+                            dataRow.stats[1].padStart(6) +  // Snt  
+                            dataRow.stats[2].padStart(8) +  // Last
+                            dataRow.stats[3].padStart(8) +  // Avg
+                            dataRow.stats[4].padStart(8) +  // Best
+                            dataRow.stats[5].padStart(8) +  // Wrst
+                            dataRow.stats[6].padStart(8);   // StDev
+                        
+                        formattedLines.push(formattedRow);
+                    } else {
+                        // 解析失敗時保持原樣
+                        formattedLines.push(trimmed);
+                    }
+                    continue;
+                }
+                
+                // 其他行保持原樣
+                formattedLines.push(trimmed);
             }
             
             return formattedLines.join('\n');
