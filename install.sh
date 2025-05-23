@@ -447,7 +447,7 @@ app.post('/ping', async (req, res) => {
     }
 });
 
-// 執行 MTR 測試
+// 執行 MTR 測試 - 修復：添加 --report-wide 參數
 app.post('/mtr', async (req, res) => {
     const { target, cycles = 10 } = req.body;
     
@@ -473,7 +473,8 @@ app.post('/mtr', async (req, res) => {
     }
     
     try {
-        const args = ['--report', '--report-cycles', cycles.toString(), target];
+        // 修復：添加 --report-wide 參數防止主機名截斷
+        const args = ['--report', '--report-wide', '--report-cycles', cycles.toString(), target];
         const output = await executeCommand('mtr', args, 90000);
         
         res.json({
@@ -489,7 +490,7 @@ app.post('/mtr', async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'MTR 不可用或執行失敗: ' + error.message,
-            command: `mtr --report --report-cycles ${cycles} ${target}`
+            command: `mtr --report --report-wide --report-cycles ${cycles} ${target}`
         });
     }
 });
@@ -582,6 +583,46 @@ EOF
     log "3. 啟動服務: sudo systemctl start looking-glass-slave"
 }
 
+# 修復現有 Slave 節點的 MTR 命令
+fix_existing_slave() {
+    log "修復現有 Slave 節點的 MTR 命令..."
+    
+    local install_dir="/opt/looking-glass-slave"
+    
+    # 檢查目錄是否存在
+    if [[ ! -d "$install_dir" ]]; then
+        error "找不到 Slave 安裝目錄: $install_dir"
+    fi
+    
+    # 備份原文件
+    if [[ -f "$install_dir/slave-agent.js" ]]; then
+        cp "$install_dir/slave-agent.js" "$install_dir/slave-agent.js.backup.$(date +%Y%m%d_%H%M%S)"
+        log "已備份原文件到 slave-agent.js.backup"
+    fi
+    
+    # 修復 MTR 命令
+    if [[ -f "$install_dir/slave-agent.js" ]]; then
+        sed -i "s/'--report', '--report-cycles'/'--report', '--report-wide', '--report-cycles'/g" "$install_dir/slave-agent.js"
+        sed -i "s/mtr --report --report-cycles/mtr --report --report-wide --report-cycles/g" "$install_dir/slave-agent.js"
+        log "已修復 MTR 命令參數"
+        
+        # 重啟服務
+        if systemctl is-active --quiet looking-glass-slave; then
+            log "重啟 Slave 服務..."
+            sudo systemctl restart looking-glass-slave
+        elif command -v pm2 >/dev/null 2>&1; then
+            log "重啟 PM2 進程..."
+            pm2 restart lg-slave 2>/dev/null || pm2 restart slave-agent 2>/dev/null || warn "未找到 PM2 進程"
+        else
+            warn "請手動重啟 Slave 服務"
+        fi
+        
+        log "修復完成！"
+    else
+        error "找不到 slave-agent.js 文件"
+    fi
+}
+
 # 安裝 PM2
 install_pm2() {
     if command -v pm2 >/dev/null 2>&1; then
@@ -639,9 +680,10 @@ show_usage() {
     echo "Looking Glass 安裝腳本"
     echo ""
     echo "使用方法:"
-    echo "  $0 master    # 安裝 Master 節點"  
-    echo "  $0 slave     # 安裝 Slave 節點"
-    echo "  $0 deps      # 只安裝系統依賴"
+    echo "  $0 master        # 安裝 Master 節點"  
+    echo "  $0 slave         # 安裝 Slave 節點"
+    echo "  $0 deps          # 只安裝系統依賴"
+    echo "  $0 fix-slave     # 修復現有 Slave 節點的 MTR 命令"
     echo ""
     echo "選項:"
     echo "  --no-service    # 不創建系統服務"
@@ -658,7 +700,7 @@ main() {
     # 解析參數
     while [[ $# -gt 0 ]]; do
         case $1 in
-            master|slave|deps)
+            master|slave|deps|fix-slave)
                 node_type=$1
                 shift
                 ;;
@@ -683,6 +725,12 @@ main() {
     if [[ -z "$node_type" ]]; then
         show_usage
         exit 1
+    fi
+    
+    # 特殊處理 fix-slave
+    if [[ "$node_type" == "fix-slave" ]]; then
+        fix_existing_slave
+        exit 0
     fi
     
     log "開始安裝 Looking Glass $node_type 節點..."
