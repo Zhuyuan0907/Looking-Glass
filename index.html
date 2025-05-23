@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Looking Glass - 看見玻璃</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+    <link rel="icon" type="image/ico" href="favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            padding: 1.5rem 0;
+            text-align: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .logo-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            object-fit: contain;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+        }
+
+        @media (max-width: 768px) {
+            .logo-icon {
+                width: 2rem;
+                height: 2rem;
+            }
+            
+            .logo {
+                font-size: 1.5rem;
+            }
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-title {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            color: #495057;
+        }
+
+        .node-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .node-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .node-card:hover {
+            border-color: #007bff;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        .node-name {
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+
+        .node-location {
+            color: #6c757d;
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .node-provider {
+            color: #6c757d;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+
+        .node-status {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-maintenance {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        /* 彈窗樣式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 1000px;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #495057;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: #495057;
+            background: #f8f9fa;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            max-height: calc(90vh - 140px);
+        }
+
+        .node-info-section {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .node-info-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .node-info-header h3 {
+            color: #495057;
+            margin: 0;
+        }
+
+        .node-info-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .test-section {
+            margin-bottom: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 150px 120px;
+            gap: 1rem;
+            align-items: end;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #495057;
+        }
+
+        .form-input {
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .form-select {
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #0056b3;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .output-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1rem;
+            overflow: hidden;
+        }
+
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .output-header h4 {
+            margin: 0;
+            color: #495057;
+        }
+
+        .loading {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            color: #007bff;
+            font-size: 0.9rem;
+        }
+
+        .loading.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e9ecef;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .command-info {
+            background: white;
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #495057;
+            margin-bottom: 1rem;
+            border: 1px solid #e9ecef;
+        }
+
+        .output-content {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            min-height: 250px;
+            white-space: pre;
+            overflow-x: auto;
+            overflow-y: auto;
+            line-height: 1.4;
+            border: 1px solid #e9ecef;
+            scrollbar-width: thin;
+            scrollbar-color: #495057 #1e1e1e;
+            width: 100%;
+            min-width: 100%;
+            box-sizing: border-box;
+            word-break: keep-all;
+            word-wrap: normal;
+        }
+
+        .output-content::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .output-content::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        .output-content::-webkit-scrollbar-thumb {
+            background: #495057;
+            border-radius: 4px;
+        }
+
+        .output-content::-webkit-scrollbar-thumb:hover {
+            background: #6c757d;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .node-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal {
+                margin: 0.5rem;
+                max-width: calc(100% - 1rem);
+                max-height: 98vh;
+            }
+
+            .modal-body {
+                padding: 1rem;
+                gap: 1.5rem;
+            }
+
+            .modal-header {
+                padding: 1rem;
+            }
+
+            .output-content {
+                font-size: 0.8rem;
+                padding: 1rem;
+                line-height: 1.4;
+                height: 350px;
+            }
+
+            .node-info-section {
+                padding: 1rem;
+            }
+
+            .output-section {
+                min-height: 300px;
+            }
+        }
+
+        .error-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            border: 1px solid #f5c6cb;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 1100;
+            max-width: 400px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .error-toast .close-btn {
+            background: none;
+            border: none;
+            color: #721c24;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <img src="logo.png" alt="Logo" class="logo-icon">
+            竺原ㄉLooking Glass，讓你看見玻璃
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-title">選擇測試節點 (Select Node)</div>
+        <div class="node-grid" id="nodeGrid">
+            <div style="text-align: center; color: #6c757d; padding: 2rem;">載入中...</div>
+        </div>
+    </div>
+
+    <!-- 測試彈窗 -->
+    <div class="modal-overlay" id="testModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">網路測試</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="node-info-section">
+                    <div class="node-info-header">
+                        <h3 id="selectedNodeName">節點名稱</h3>
+                        <div class="node-status" id="selectedNodeStatus">● 在線</div>
+                    </div>
+                    <div class="node-info-details">
+                        <div><strong>位置:</strong> <span id="selectedNodeLocation">-</span></div>
+                        <div><strong>IPv4:</strong> <span id="selectedNodeIPv4">-</span></div>
+                        <div><strong>供應商:</strong> <span id="selectedNodeProvider">-</span></div>
+                    </div>
+                </div>
+
+                <div class="test-section">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="targetHost">目標主機 (Target Host)</label>
+                            <input type="text" id="targetHost" class="form-input" placeholder="例如: google.com 或 8.8.8.8">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="testType">測試類型</label>
+                            <select id="testType" class="form-select">
+                                <option value="ping">Ping</option>
+                                <option value="mtr">MTR</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <button id="runTest" class="btn btn-primary">執行測試</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="output-section">
+                    <div class="output-header">
+                        <h4>測試結果</h4>
+                        <div class="loading" id="loadingIndicator">
+                            <div class="spinner"></div>
+                            <span>執行中...</span>
+                        </div>
+                    </div>
+                    <div class="command-info" id="commandInfo">等待執行測試...</div>
+                    <div class="output-content" id="outputContent">點擊上方的「執行測試」按鈕開始網路診斷</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = '/api';
+        let nodes = [];
+        let selectedNode = null;
+
+        async function init() {
+            try {
+                console.log('開始初始化...');
+                await loadNodes();
+                renderNodes();
+                setupEventListeners();
+                console.log('初始化完成');
+            } catch (error) {
+                console.error('初始化失敗:', error);
+                showError('系統初始化失敗: ' + error.message);
+            }
+        }
+
+        async function loadNodes() {
+            try {
+                console.log('載入節點資訊...');
+                const response = await fetch(API_BASE_URL + '/nodes');
+                console.log('API 響應狀態:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                }
+                
+                const data = await response.json();
+                console.log('收到的數據:', data);
+                
+                if (data.success && data.nodes) {
+                    nodes = data.nodes;
+                    console.log('成功載入 ' + nodes.length + ' 個節點');
+                } else {
+                    throw new Error(data.error || '無法載入節點');
+                }
+            } catch (error) {
+                console.error('載入節點失敗:', error);
+                nodes = getDefaultNodes();
+                showError('無法連接到 API，使用預設節點: ' + error.message);
+            }
+        }
+
+        function getDefaultNodes() {
+            return [
+                {
+                    id: 'local-test',
+                    name: '本地測試節點',
+                    location: '本地',
+                    ipv4: '127.0.0.1',
+                    provider: '本地',
+                    status: 'online'
+                }
+            ];
+        }
+
+        function renderNodes() {
+            const nodeGrid = document.getElementById('nodeGrid');
+            nodeGrid.innerHTML = '';
+
+            if (nodes.length === 0) {
+                nodeGrid.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 2rem;">暫無可用節點</div>';
+                return;
+            }
+
+            nodes.forEach(function(node) {
+                const nodeCard = document.createElement('div');
+                nodeCard.className = 'node-card';
+                nodeCard.dataset.nodeId = node.id;
+                
+                const statusText = getStatusText(node.status);
+                const statusClass = getStatusClass(node.status);
+                
+                nodeCard.innerHTML = 
+                    '<div class="node-name">' + node.name + '</div>' +
+                    '<div class="node-location">' + node.location + '</div>' +
+                    '<div class="node-provider">' + node.provider + '</div>' +
+                    '<div class="node-status ' + statusClass + '">' + statusText + '</div>';
+
+                nodeCard.addEventListener('click', function() {
+                    selectNode(node.id);
+                });
+                nodeGrid.appendChild(nodeCard);
+            });
+        }
+
+        function getStatusText(status) {
+            switch (status) {
+                case 'online': return '● 在線';
+                case 'offline': return '● 離線';
+                case 'maintenance': return '● 維護中';
+                default: return '● 未知';
+            }
+        }
+
+        function getStatusClass(status) {
+            switch (status) {
+                case 'online': return 'status-online';
+                case 'offline': return 'status-offline';
+                case 'maintenance': return 'status-maintenance';
+                default: return 'status-offline';
+            }
+        }
+
+        function selectNode(nodeId) {
+            selectedNode = nodes.find(function(node) {
+                return node.id === nodeId;
+            });
+            
+            if (!selectedNode) return;
+
+            // 更新彈窗的節點資訊
+            document.getElementById('modalTitle').textContent = '網路測試 - ' + selectedNode.name;
+            document.getElementById('selectedNodeName').textContent = selectedNode.name;
+            document.getElementById('selectedNodeLocation').textContent = selectedNode.location;
+            document.getElementById('selectedNodeIPv4').textContent = selectedNode.ipv4;
+            document.getElementById('selectedNodeProvider').textContent = selectedNode.provider;
+            
+            const statusElement = document.getElementById('selectedNodeStatus');
+            statusElement.textContent = getStatusText(selectedNode.status);
+            statusElement.className = 'node-status ' + getStatusClass(selectedNode.status);
+
+            // 清空之前的測試結果
+            document.getElementById('outputContent').textContent = '點擊上方的「執行測試」按鈕開始網路診斷';
+            document.getElementById('commandInfo').textContent = '等待執行測試...';
+            document.getElementById('targetHost').value = '';
+
+            // 顯示彈窗
+            openModal();
+        }
+
+        function openModal() {
+            document.getElementById('testModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('testModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function setupEventListeners() {
+            document.getElementById('runTest').addEventListener('click', runNetworkTest);
+            
+            document.getElementById('targetHost').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    runNetworkTest();
+                }
+            });
+
+            // 點擊彈窗外部關閉
+            document.getElementById('testModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+
+            // ESC 鍵關閉彈窗
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                }
+            });
+        }
+
+        async function runNetworkTest() {
+            if (!selectedNode) {
+                showError('請先選擇一個節點');
+                return;
+            }
+
+            const targetHost = document.getElementById('targetHost').value.trim();
+            const testType = document.getElementById('testType').value;
+
+            if (!targetHost) {
+                showError('請輸入目標主機');
+                return;
+            }
+
+            if (!isValidTarget(targetHost)) {
+                showError('請輸入有效的主機名或IPv4地址');
+                return;
+            }
+
+            if (selectedNode.status !== 'online') {
+                showError('選擇的節點目前不可用，無法執行測試');
+                return;
+            }
+
+            await startTest(targetHost, testType);
+        }
+
+        function isValidTarget(target) {
+            const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+            const hostnameRegex = /^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$/;
+            
+            return ipv4Regex.test(target) || hostnameRegex.test(target);
+        }
+
+        async function startTest(target, type) {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const outputContent = document.getElementById('outputContent');
+            const commandInfo = document.getElementById('commandInfo');
+            const runButton = document.getElementById('runTest');
+
+            loadingIndicator.classList.add('active');
+            runButton.disabled = true;
+            
+            let command, apiEndpoint;
+            if (type === 'ping') {
+                command = 'ping -c 4 ' + target;
+                apiEndpoint = 'ping';
+            } else {
+                command = 'mtr --report --report-cycles 10 ' + target;
+                apiEndpoint = 'mtr';
+            }
+            
+            commandInfo.textContent = command;
+            outputContent.textContent = '正在從 ' + selectedNode.name + ' (' + selectedNode.ipv4 + ') 執行 ' + type.toUpperCase() + ' 到 ' + target + '...\n\n';
+
+            try {
+                const response = await fetch(API_BASE_URL + '/' + apiEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        target: target,
+                        nodeId: selectedNode.id
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 對 MTR 輸出進行格式化，改善對齊
+                    let formattedOutput = data.output;
+                    if (type === 'mtr') {
+                        formattedOutput = formatMtrOutput(data.output);
+                    }
+                    outputContent.textContent = formattedOutput;
+                } else {
+                    outputContent.textContent = '錯誤: ' + data.error;
+                }
+                
+            } catch (error) {
+                console.error('API 請求失敗:', error);
+                outputContent.textContent = '連接錯誤: 無法連接到 API 服務器\n' + error.message;
+            } finally {
+                loadingIndicator.classList.remove('active');
+                runButton.disabled = false;
+            }
+        }
+
+        function showError(message) {
+            const existingError = document.querySelector('.error-toast');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            const errorToast = document.createElement('div');
+            errorToast.className = 'error-toast';
+            
+            errorToast.innerHTML = 
+                '<strong>錯誤:</strong> ' + message +
+                '<button class="close-btn" onclick="this.parentElement.remove()">&times;</button>';
+            
+            document.body.appendChild(errorToast);
+            
+            setTimeout(function() {
+                if (errorToast.parentElement) {
+                    errorToast.remove();
+                }
+            }, 5000);
+        }
+
+        // MTR 輸出格式化函數 - 右對齊數字，不截斷主機名
+        function formatMtrOutput(output) {
+            const lines = output.split('\n');
+            let formattedLines = [];
+            let maxHostLength = 30; // 預設最小寬度
+            let dataRows = [];
+            
+            // 第一次掃描：找出最長的主機名，收集數據行
+            for (let line of lines) {
+                const trimmed = line.trim();
+                if (trimmed.includes('|--')) {
+                    const parts = trimmed.split(/\s+/);
+                    if (parts.length >= 8) {
+                        const hostPart = parts[0] + ' ' + parts[1];
+                        maxHostLength = Math.max(maxHostLength, hostPart.length);
+                        
+                        dataRows.push({
+                            original: trimmed,
+                            hostPart: hostPart,
+                            stats: parts.slice(2) // Loss%, Snt, Last, Avg, Best, Wrst, StDev
+                        });
+                    }
+                }
+            }
+            
+            // 限制最大寬度，但給主機名足夠空間
+            maxHostLength = Math.min(maxHostLength + 3, 80);
+            
+            // 第二次處理：格式化輸出
+            for (let line of lines) {
+                const trimmed = line.trim();
+                
+                if (!trimmed) {
+                    formattedLines.push('');
+                    continue;
+                }
+                
+                // 處理表頭行
+                if (trimmed.includes('HOST:') && trimmed.includes('Loss%')) {
+                    const header = 
+                        'HOST:'.padEnd(maxHostLength) + 
+                        'Loss%'.padStart(8) + 
+                        'Snt'.padStart(6) + 
+                        'Last'.padStart(8) + 
+                        'Avg'.padStart(8) + 
+                        'Best'.padStart(8) + 
+                        'Wrst'.padStart(8) + 
+                        'StDev'.padStart(8);
+                    
+                    formattedLines.push(header);
+                    continue;
+                }
+                
+                // 處理數據行
+                if (trimmed.includes('|--')) {
+                    const dataRow = dataRows.find(function(row) {
+                        return row.original === trimmed;
+                    });
+                    if (dataRow && dataRow.stats.length >= 7) {
+                        const formattedRow = 
+                            dataRow.hostPart.padEnd(maxHostLength) +
+                            dataRow.stats[0].padStart(8) +  // Loss%
+                            dataRow.stats[1].padStart(6) +  // Snt  
+                            dataRow.stats[2].padStart(8) +  // Last
+                            dataRow.stats[3].padStart(8) +  // Avg
+                            dataRow.stats[4].padStart(8) +  // Best
+                            dataRow.stats[5].padStart(8) +  // Wrst
+                            dataRow.stats[6].padStart(8);   // StDev
+                        
+                        formattedLines.push(formattedRow);
+                    } else {
+                        // 解析失敗時保持原樣
+                        formattedLines.push(trimmed);
+                    }
+                    continue;
+                }
+                
+                // 其他行保持原樣
+                formattedLines.push(trimmed);
+            }
+            
+            return formattedLines.join('\n');
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

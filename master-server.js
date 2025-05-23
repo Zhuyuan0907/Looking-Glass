@@ -374,8 +374,8 @@ app.post('/api/mtr', async (req, res) => {
             // 發送到 Slave 節點執行
             result = await slaveManager.sendToSlave(nodeId, '/mtr', { target }, 90000);
         } else {
-            // 在本地執行
-            const args = ['--report', '--report-cycles', '10', target];
+            // 在本地執行 - 修改這裡添加 --report-wide 參數
+            const args = ['--report', '--report-wide', '--report-cycles', '10', target];
             const output = await executeLocalCommand('mtr', args, 90000);
             result = {
                 success: true,
@@ -399,7 +399,7 @@ app.post('/api/mtr', async (req, res) => {
         res.status(500).json({
             success: false,
             error: error.message,
-            command: `mtr --report --report-cycles 10 ${target}`
+            command: `mtr --report --report-wide --report-cycles 10 ${target}`
         });
     }
 });
